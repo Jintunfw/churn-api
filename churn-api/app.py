@@ -1,23 +1,32 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from pycaret.classification import load_model, predict_model
 
-app = FastAPI()  # <-- MUST be before @app.post
+app = FastAPI()
 
-model = load_model("churn_model")  # or "churn_model.pkl" depending on your save
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+model = load_model("churn_model")
 
 EXPECTED_FEATURES = [
-    'contract_Two Year',
-    'contract_One Year',
-    'referred_a_friend',
-    'dependents',
-    'senior_citizen',
-    'number_of_referrals',
-    'offer_Offer D',
-    'phone_service_x',
-    'premium_tech_support',
-    'married',
-    'married_senior'
+    "contract_Two Year",
+    "contract_One Year",
+    "referred_a_friend",
+    "dependents",
+    "senior_citizen",
+    "number_of_referrals",
+    "offer_Offer D",
+    "phone_service_x",
+    "premium_tech_support",
+    "married",
+    "married_senior",
 ]
 
 THRESHOLD = 0.65
@@ -40,7 +49,6 @@ def predict(payload: dict):
                 df[col] = 0
 
         df = df[EXPECTED_FEATURES]
-
         preds = predict_model(model, data=df)
 
         prob_col = next((c for c in ["Score_1", "Score", "prediction_score"] if c in preds.columns), None)
@@ -54,14 +62,3 @@ def predict(payload: dict):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
